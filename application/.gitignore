@@ -1,0 +1,95 @@
+# GitHub/git ignore rules for OpenClaw application
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Configuration (sensitive data)
+.env
+.env.local
+.env.*.local
+config/settings.local.yaml
+config/settings.prod.yaml
+
+# SSH Keys & Secrets
+*.pem
+*.key
+*.pub
+**/secrets/
+**/private/
+
+# Logs
+logs/
+*.log
+*.log.*
+openclaw.log
+
+# Data & Cache
+data/
+cache/
+*.db
+*.sqlite
+*.sqlite3
+/opt/openclaw/data/vector_db/*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*/.cache/
+
+# Application runtime
+pid/
+*.pid
+/venv_lock/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project-specific
+# (構築手順書の参照パスなど)
+infrastructure/parameters.override.json
+application/logs/*
+!application/logs/.gitkeep

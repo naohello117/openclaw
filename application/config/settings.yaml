@@ -1,0 +1,88 @@
+# =====================================================================
+# OpenClaw - Application Configuration
+# =====================================================================
+# 詳細設計書に基づいた環境変数設定
+# 自分の環境に合わせて値を編集してください
+
+# LLM Configuration (Azure AI Foundry)
+llm:
+  provider: "azure_ai_foundry"
+  model_deployment_name: "deploy-claude-sonnet"
+  endpoint: "https://<your-foundry-resource>.openai.azure.com/"  # TODO: 環境値に置き換え
+  api_version: "2024-02-15-preview"
+  temperature: 0.2
+  max_tokens: 4096
+  api_key_vault_name: "kv-prd-aiops-xxx"  # Key Vault リソース名
+  api_key_secret_name: "AIFoundry-API-Key"
+
+# Agent Execution Settings
+agent:
+  max_iterations: 5                          # エラー時の自律リトライ最大回数
+  command_timeout_sec: 60                    # 1コマンドあたりの最大待ち時間(秒)
+  require_hitl: true                         # Human-in-the-Loop の有効化
+  inventory_file: "./inventory/targets.yaml" # 対象 VM インベントリファイル
+  api_retry_count: 3                         # LLM API リクエスト再試行回数
+  api_failure_alert_channel: "#alerts-aiops" # 障害通知用 Slack チャネル
+
+# Gateway & Chat Platform Configuration
+gateway:
+  chat_platform: "slack"                     # "slack" または "teams"
+  slack_webhook_url: ""                      # TODO: Slack Bot の Webhook URL を設定
+  slack_bot_token_vault_name: "kv-prd-aiops-xxx"
+  slack_bot_token_secret_name: "Slack-Bot-Token"
+  teams_webhook_url: ""                      # Teams を使用する場合は URL を設定
+
+# SSH Configuration
+ssh:
+  username: "ai_agent"                       # リモート VM のユーザー名
+  key_vault_name: "kv-prd-aiops-xxx"        # SSH 秘密鍵を保存する Key Vault
+  key_secret_name: "SSH-Key-TargetVMs"      # Key Vault のシークレット名
+  timeout_sec: 30                            # SSH 接続タイムアウト（秒）
+
+# Logging & Monitoring
+logging:
+  level: "INFO"                              # ログレベル (DEBUG, INFO, WARNING, ERROR)
+  log_file: "/opt/openclaw/logs/openclaw.log"
+  log_format: "json"                         # ログ形式 (json または text)
+  azure_log_analytics_workspace_id: ""       # TODO: Log Analytics ワークスペース ID
+  azure_log_analytics_workspace_key: ""      # TODO: Log Analytics ワークスペース キー
+
+# Security & Compliance
+security:
+  enable_audit_trail: true                   # 監査ログの記録
+  mask_sensitive_data: true                  # ログ内の機密情報をマスク
+  allowed_commands_whitelist: []             # 許可コマンド（空の場合はガードレール定義に従う）
+  blocked_command_patterns:                  # ブロック対象のコマンドパターン
+    - "rm\\s+-r.*"
+    - "mkfs.*"
+    - "fdisk.*|parted.*"
+    - "reboot|shutdown|init\\s+[06]"
+    - "chmod\\s+-R\\s+777.*"
+    - "iptables\\s+-F|ufw\\s+disable"
+
+# HITL (Human-in-the-Loop) Configuration
+hitl:
+  enabled: true                              # HITL 機能の有効化
+  approval_timeout_sec: 300                  # 承認リクエストのタイムアウト（秒）
+  approval_required_for_patterns:            # HITL 承認が必要なパターン
+    - "systemctl"
+    - "service"
+    - "kill"
+    - "apt|yum"
+    - "vi|nano|sed"
+
+# Reflection & Memory
+reflection:
+  enabled: true                              # 自律リトライ（Reflection）の有効化
+  max_reflection_iterations: 3               # Reflection の最大リトライ回数
+
+memory:
+  enabled: true                              # セッション中のメモリ保持
+  max_history_lines: 100                     # 履歴保持の最大行数
+  vector_db_path: "/opt/openclaw/data/vector_db"  # RAG 用ベクトルDB
+
+# System Behavior
+system:
+  readonly_default: true                     # Phase 1: 参照系コマンドのみ実行
+  enable_autonomous_mode: false              # Phase 3: 自律実行モード（運用段階で有効化）
+  enable_metrics_collection: true            # メトリクス収集

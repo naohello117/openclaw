@@ -1,0 +1,36 @@
+# =====================================================================
+# OpenClaw - Target VM Inventory
+# =====================================================================
+# 対象となるLinux VMのリスト
+# AIエージェントはこのファイルを参照して、操作対象を認識します
+# 
+# 使い方：
+# 1. VM を追加する際は、以下のフォーマットに従って行を追加
+# 2. Git にコミット
+# 3. 再デプロイは不要（アプリケーション起動時に再度読み込まれます）
+
+targets:
+  - name: "web-server-01"
+    ip: "10.0.2.10"
+    user: "ai_agent"
+    description: "Production Web Server (Nginx)"
+    tags:
+      - web
+      - production
+    
+  - name: "db-server-01"
+    ip: "10.0.2.20"
+    user: "ai_agent"
+    description: "Production Database Server (MySQL)"
+    tags:
+      - database
+      - production
+    
+  # テスト環境用 VM の例（必要に応じて追加）
+  # - name: "test-web-01"
+  #   ip: "10.0.2.30"
+  #   user: "ai_agent"
+  #   description: "Staging Web Server"
+  #   tags:
+  #     - web
+  #     - staging

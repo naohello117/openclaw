@@ -1,0 +1,59 @@
+# =====================================================================
+# OpenClaw Application - Python Dependencies
+# =====================================================================
+# インストール方法:
+# python3 -m venv venv
+# source venv/bin/activate
+# pip install -r requirements.txt
+
+# Azure SDK
+azure-identity>=1.14.0
+azure-keyvault-secrets>=4.4.0
+azure-monitor-opentelemetry>=1.0.0
+azure-storage-blob>=12.19.0
+
+# LLM & AI
+openai>=1.3.0  # Azure OpenAI 互換
+
+# Slack Integration
+slack-sdk>=3.26.0
+slack-bolt>=1.18.0
+
+# SSH & Remote Execution
+paramiko>=3.4.0
+fabric>=3.2.0
+
+# Configuration Management
+PyYAML>=6.0
+python-dotenv>=1.0.0
+
+# Logging & Monitoring
+python-json-logger>=2.0.7
+structlog>=24.1.0
+
+# HTTP & Network
+requests>=2.31.0
+httpx>=0.25.0
+
+# Data Processing
+pandas>=2.1.0
+numpy>=1.26.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.12.0
+
+# Code Quality
+black>=23.12.0
+flake8>=6.1.0
+mypy>=1.7.0
+isort>=5.13.0
+
+# Documentation
+sphinx>=7.2.0
+sphinx-rtd-theme>=2.0.0
+
+# Utilities
+click>=8.1.0
+tqdm>=4.66.0
