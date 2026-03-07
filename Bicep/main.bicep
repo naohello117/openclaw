@@ -23,8 +23,8 @@ param targetSubnetAddressSpace string = '10.0.2.0/24'
 // VM parameters
 param vmSize string = 'Standard_B2ms'
 param vmOsPublisher string = 'Canonical'
-param vmOsOffer string = '0001-com-ubuntu-server-noble'
-param vmOsSku string = '24_04-lts-gen2'
+param vmOsOffer string = 'ubuntu-24_04-lts'
+param vmOsSku string = 'server'
 param vmAdminUsername string = 'azureuser'
 
 // SSH public key (base64 encoded or plain text - provide your key)
