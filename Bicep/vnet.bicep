@@ -29,20 +29,21 @@ resource nsgMgmt 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   tags: commonTags
   properties: {
     securityRules: [
-      {
-        name: 'Allow_Inbound_Slack_Webhook'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          destinationPortRange: '443'
-          sourceAddressPrefix: '199.145.126.0/22'  // Slack IP range
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 100
-          direction: 'Inbound'
-          description: 'Allow inbound from Slack Webhook'
-        }
-      }
+      // TODO: Slack IP アドレス範囲を確認してから有効化してください
+      //{
+      //  name: 'Allow_Inbound_Slack_Webhook'
+      //  properties: {
+      //    protocol: 'Tcp'
+      //    sourcePortRange: '*'
+      //    destinationPortRange: '443'
+      //    sourceAddressPrefix: '199.145.126.0/22'  // Slack IP range (要確認)
+      //    destinationAddressPrefix: '*'
+      //    access: 'Allow'
+      //    priority: 100
+      //    direction: 'Inbound'
+      //    description: 'Allow inbound from Slack Webhook'
+      //  }
+      //}
       {
         name: 'Allow_Inbound_SSH'
         properties: {

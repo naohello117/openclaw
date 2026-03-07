@@ -122,19 +122,6 @@ resource nsgMgmt 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   properties: {
     securityRules: [
       {
-        name: 'Allow_Inbound_Slack'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          destinationPortRange: '443'
-          sourceAddressPrefix: '199.145.126.0/22'  // Slack IP range
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 100
-          direction: 'Inbound'
-        }
-      }
-      {
         name: 'Allow_Inbound_SSH'
         properties: {
           protocol: 'Tcp'

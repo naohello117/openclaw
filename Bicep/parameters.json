@@ -27,7 +27,7 @@
       "value": "azureuser"
     },
     "sshPublicKey": {
-      "value": ""
+      "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCWrnxb3a7I0x/QxRk6EooVb74QqYgAcsHFJoFJ/b5tGOrVIZY+unxvYK7lgY4kzlQ3TTykRf4R0HFWtjLvWId++T26k5s2H1OMOujbkfUvvVwDQjpLQbZT0nwoxMwFbG9MskWMquYxz1J1/4k6a/ft8PKOn88qq7DV/ktFTcVTS787EKdI1q5YAh47AaphpNidynX3IIWdqVLtUBVrmZh30S+47da0hbuQQX6ZpfjgHIC3TkBZuUk/PIWYan3tpSJbvIZv4dSC/91q615K39FBgZ72CRFeheGOA754O1qzDCBsSCdr16WERlfrjwWIzBOgFz+P6sC0XC62oJIz052Tmc0jSYp/FmUzWFI8+KN+HuHqQV5Z3Vi/Y7e1VFxiDCBr2cOplM36DoD4Nknb2FQlFs7IpxH4n+juZ1B/Tl6wnCa/eTVfF/OpbYzEgOLQ7viGQNkw9nvJsERsO6GSd78rOGsxWU+XibfpBWP9bvyyFFcqqkS4BrLILX406YOUPTkbQtb+LJDszwldDPoYd0IR7frH177nOZ5XT4ntDXeC3glnPYjLqNSfvrDqPYZtTJZ6t8gflDOCyx5+r3S3wU6gJ9mCh8Ri2zREyH/vsRztgp+z3SmDIC9AVdz5FUV45cWMTyx2AIxkqqEDpAz8vS0mNEq3QSu8G9zcT4aiInI/rw== naohe@Tom�̃f�X�N�g�b�v"
     },
     "logAnalyticsRetention": {
       "value": 30
