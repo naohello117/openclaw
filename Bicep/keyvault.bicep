@@ -11,7 +11,7 @@ param vmManagedIdentityId string
 param commonTags object
 
 var uniqueSuffix = uniqueString(resourceGroup().id)
-var keyVaultName = 'kv-${projectName}-${environment}-${uniqueSuffix}'
+var keyVaultName = 'kv${projectName}${environment}${take(uniqueSuffix, 4)}'
 
 // =====================================================================
 // Key Vault

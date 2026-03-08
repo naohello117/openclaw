@@ -59,19 +59,6 @@ resource nsgMgmt 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
         }
       }
       {
-        name: 'Deny_All_Inbound'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          destinationPortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-          access: 'Deny'
-          priority: 4096
-          direction: 'Inbound'
-        }
-      }
-      {
         name: 'Allow_Outbound_HTTPS'
         properties: {
           protocol: 'Tcp'

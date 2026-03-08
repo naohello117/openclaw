@@ -1,0 +1,489 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.41.2.15936",
+      "templateHash": "2221312912770871951"
+    },
+    "description": "Azure AI Foundry based AI Agent infrastructure deployment with Bicep"
+  },
+  "parameters": {
+    "projectName": {
+      "type": "string",
+      "defaultValue": "aiops"
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "prod"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "japaneast"
+    },
+    "createdDate": {
+      "type": "string",
+      "defaultValue": "[utcNow('yyyy-MM-dd')]"
+    },
+    "vnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16"
+    },
+    "mgmtSubnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24"
+    },
+    "targetSubnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.0.2.0/24"
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2ms"
+    },
+    "vmOsPublisher": {
+      "type": "string",
+      "defaultValue": "Canonical"
+    },
+    "vmOsOffer": {
+      "type": "string",
+      "defaultValue": "ubuntu-24_04-lts"
+    },
+    "vmOsSku": {
+      "type": "string",
+      "defaultValue": "server"
+    },
+    "vmAdminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser"
+    },
+    "sshPublicKey": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "logAnalyticsRetention": {
+      "type": "int",
+      "defaultValue": 30
+    }
+  },
+  "variables": {
+    "uniqueSuffix": "[uniqueString(resourceGroup().id)]",
+    "resourceNamePrefix": "[format('{0}-{1}', parameters('projectName'), parameters('environment'))]",
+    "vnetName": "[format('vnet-{0}-001', variables('resourceNamePrefix'))]",
+    "mgmtSubnetName": "snet-mgmt-001",
+    "targetSubnetName": "snet-target-001",
+    "nsgMgmtName": "nsg-mgmt-001",
+    "nsgTargetName": "nsg-target-001",
+    "vmName": "vm-openclaw-bastion",
+    "vmOsDiskName": "[format('{0}-osdisk', variables('vmName'))]",
+    "vmNicName": "[format('{0}-nic', variables('vmName'))]",
+    "vmDataDiskName": "[format('{0}-datadisk', variables('vmName'))]",
+    "vmPublicIpName": "[format('{0}-pip', variables('vmName'))]",
+    "keyvaultName": "[format('kv-{0}-{1}', variables('resourceNamePrefix'), variables('uniqueSuffix'))]",
+    "logAnalyticsName": "[format('log-{0}-001', variables('resourceNamePrefix'))]",
+    "aiHubName": "[format('hub-{0}-001', variables('resourceNamePrefix'))]",
+    "storageAccountName": "[format('st{0}{1}', replace(variables('resourceNamePrefix'), '-', ''), variables('uniqueSuffix'))]",
+    "commonTags": {
+      "project": "[parameters('projectName')]",
+      "environment": "[parameters('environment')]",
+      "managedBy": "Bicep",
+      "createdDate": "[parameters('createdDate')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-11-01",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('mgmtSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('mgmtSubnetAddressSpace')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgmtName'))]"
+              },
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.KeyVault"
+                },
+                {
+                  "service": "Microsoft.Storage"
+                }
+              ]
+            }
+          },
+          {
+            "name": "[variables('targetSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('targetSubnetAddressSpace')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgTargetName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgmtName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgTargetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-11-01",
+      "name": "[variables('nsgMgmtName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow_Inbound_SSH",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "133.32.181.21",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Deny_All_Inbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 4096,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow_Outbound_Azure",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "AzureCloud",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-11-01",
+      "name": "[variables('nsgTargetName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow_SSH_From_OpenClaw",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('mgmtSubnetAddressSpace')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-11-01",
+      "name": "[variables('vmPublicIpName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-11-01",
+      "name": "[variables('vmNicName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[format('{0}/subnets/{1}', resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), variables('mgmtSubnetName'))]"
+              },
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.1.4",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPublicIpName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgmtName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgMgmtName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPublicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('vmAdminUsername'))]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('vmOsPublisher')]",
+            "offer": "[parameters('vmOsOffer')]",
+            "sku": "[parameters('vmOsSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('vmOsDiskName')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 64
+          },
+          "dataDisks": [
+            {
+              "name": "[variables('vmDataDiskName')]",
+              "lun": 0,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 128,
+              "managedDisk": {
+                "storageAccountType": "Standard_LRS"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]",
+              "properties": {
+                "primary": true
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('keyvaultName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true,
+        "enabledForDiskEncryption": false,
+        "tenantId": "[subscription().tenantId]",
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '2023-07-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "list"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "accessTier": "Hot",
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2021-12-01-preview",
+      "name": "[variables('logAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": "[parameters('logAnalyticsRetention')]",
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[format('ai-{0}-001', variables('resourceNamePrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "RetentionInDays": "[parameters('logAnalyticsRetention')]",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]",
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2023-10-01-preview",
+      "name": "[variables('aiHubName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "kind": "OpenAI",
+      "sku": {
+        "name": "S0"
+      },
+      "properties": {
+        "customSubDomainName": "[variables('aiHubName')]",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2023-01-01",
+      "name": "[format('ag-{0}-alerts', variables('resourceNamePrefix'))]",
+      "location": "global",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "groupShortName": "AIAlert",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "AdminEmail",
+            "emailAddress": "admin@example.com",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "vnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+    },
+    "vmId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+    },
+    "vmPublicIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmPublicIpName')), '2023-11-01').ipAddress]"
+    },
+    "vmPrivateIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName')), '2023-11-01').ipConfigurations[0].properties.privateIPAddress]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[variables('keyvaultName')]"
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "value": "[variables('logAnalyticsName')]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    },
+    "aiHubName": {
+      "type": "string",
+      "value": "[variables('aiHubName')]"
+    },
+    "vmSystemAssignedManagedIdentity": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '2023-07-01', 'full').identity.principalId]"
+    }
+  }
+}
